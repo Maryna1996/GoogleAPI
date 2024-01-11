@@ -26,7 +26,7 @@ public class GoogleTrendsController {
             @RequestParam(required = false, defaultValue = "UA") String region,
             @RequestParam(required = false, defaultValue = "UA") String country) throws IOException {
         // Form the URL for calling the method getTrendsData
-        String apiUrl = "http://localhost:8080/google-trends/getTrends";
+        String apiUrl = "/https://trends.google.com/trends/";
         // Call the getTrendsData method from the service, passing the parameters
         return googleTrendsService.getTrendsData(keyword, region, country, apiUrl);
     }
