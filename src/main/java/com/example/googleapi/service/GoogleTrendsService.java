@@ -1,18 +1,13 @@
 package com.example.googleapi.service;
 
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.HttpClients;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.googleapi.model.TrendData;
+import com.example.googleapi.repository.TrendDataRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.Scanner;
 
 @Service
 public class GoogleTrendsService {
@@ -20,8 +15,13 @@ public class GoogleTrendsService {
     @Value("${google.api.key}")
     private String apiKey;
 
-    @Autowired
-    private HttpClient httpClient;
+    private final TrendDataRepository trendDataRepository;
+    private final RestTemplate restTemplate;
+
+    public GoogleTrendsService(TrendDataRepository trendDataRepository, RestTemplate restTemplate) {
+        this.trendDataRepository = trendDataRepository;
+        this.restTemplate = restTemplate;
+    }
 
     @Scheduled(fixedRate = 3600000) // 3600000 ms = 1 hour
     public void updateTrendsDataPeriodically() {
@@ -30,24 +30,26 @@ public class GoogleTrendsService {
     }
 
     public String getTrendsData(String keyword, String region, String country, String apiUrl) throws IOException {
-        String encodedKeyword = URLEncoder.encode(keyword, StandardCharsets.UTF_8);
-        String encodedCountry = URLEncoder.encode(country, StandardCharsets.UTF_8);
-
-        String requestUrl = apiUrl + "?key=" + apiKey + "&geo=" + encodedCountry + "&date=202101&cat=all";
-        requestUrl += "&q=" + encodedKeyword;
+        String requestUrl = apiUrl + "?key=" + apiKey + "&geo=" + country + "&date=202101&cat=all";
+        requestUrl += "&q=" + keyword;
         requestUrl += "&time=now 1-d";
 
-        HttpGet httpGet = new HttpGet(requestUrl);
+        // Perform a request to the Google Trends API
+        String trendData = restTemplate.getForObject(requestUrl, String.class);
 
-        try (InputStream responseStream = httpClient.execute(httpGet).getEntity().getContent()) {
-            return convertInputStreamToString(responseStream);
-        }
+        // Save the data to the database
+        saveTrendDataToDatabase(keyword, region, country, trendData);
+
+        return trendData;
     }
 
-    private String convertInputStreamToString(InputStream inputStream) {
-        try (Scanner scanner = new Scanner(inputStream).useDelimiter("\\A")) {
-            return scanner.hasNext() ? scanner.next() : "";
-        }
+    private void saveTrendDataToDatabase(String keyword, String region, String country, String trendData) {
+        TrendData trendDataEntity = new TrendData();
+        trendDataEntity.setKeyword(keyword);
+        trendDataEntity.setRegion(region);
+        trendDataEntity.setCountry(country);
+        trendDataEntity.setTrendData(trendData);
+
+        trendDataRepository.save(trendDataEntity);
     }
 }
-
