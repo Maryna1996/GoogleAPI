@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/google-trends")
+@RequestMapping("/api/trends")
 public class GoogleTrendsController {
 
     private final GoogleTrendsService googleTrendsService;
@@ -23,8 +23,11 @@ public class GoogleTrendsController {
     @GetMapping("/getTrends")
     public String getTrends(
             @RequestParam String keyword,
-            @RequestParam(required = false, defaultValue = "US") String region,
-            @RequestParam(required = false, defaultValue = "US") String country) throws IOException {
-        return googleTrendsService.getTrendsData(keyword, region, country);
+            @RequestParam(required = false, defaultValue = "UA") String region,
+            @RequestParam(required = false, defaultValue = "UA") String country) throws IOException {
+        // Form the URL for calling the method getTrendsData
+        String apiUrl = "http://localhost:8080/google-trends/getTrends";
+        // Call the getTrendsData method from the service, passing the parameters
+        return googleTrendsService.getTrendsData(keyword, region, country, apiUrl);
     }
 }

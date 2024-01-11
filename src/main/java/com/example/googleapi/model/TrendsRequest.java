@@ -8,7 +8,7 @@ public class TrendsRequest extends GoogleTrendsRequest {
     private String keyword;
 
     public TrendsRequest(String keyword) throws GoogleTrendsRequestException {
-        super(String.valueOf(123));
+        super(String.valueOf(System.currentTimeMillis())); // Use the current time in milliseconds
         this.keyword = keyword;
     }
 
